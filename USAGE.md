@@ -6,16 +6,30 @@
 scoop bucket add mendix https://github.com/densmoe/scoop-mendix
 ```
 
-## Install a specific version
+## Install a version
+
+### Latest in a branch
 
 ```powershell
-# Install latest version
+# Latest overall
+scoop install mendix/mendix-studio-pro
+
+# Latest Mx11
+scoop install mendix/mendix-studio-pro-11
+
+# Latest Mx10
+scoop install mendix/mendix-studio-pro-10
+
+# Latest 10.24.x
+scoop install mendix/mendix-studio-pro-10.24
+```
+
+### Specific version
+
+```powershell
+# Exact version
 scoop install mendix/mendix-studio-pro-11.9.1
-
-# Install a specific older version
 scoop install mendix/mendix-studio-pro-10.18.13
-
-# Install Mx9
 scoop install mendix/mendix-studio-pro-9.24.42
 ```
 
