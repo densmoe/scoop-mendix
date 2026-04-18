@@ -30,25 +30,14 @@ var scoopManifestTemplate = template.Must(template.New("scoop").Parse(`{
   ],
   "post_install": [
     "$installPath = \"$env:LOCALAPPDATA\\Programs\\Mendix\"",
-    "$version = Get-ChildItem $installPath -ErrorAction SilentlyContinue | Where-Object { $_.Name -like '{{.Version}}*' } | Select-Object -First 1 -ExpandProperty Name",
-    "if ($version) {",
-    "  $exePath = \"$installPath\\$version\\modeler\\Mendix.exe\"",
-    "  if (Test-Path $exePath) {",
-    "    New-Item -ItemType SymbolicLink -Path \"$dir\\Mendix.exe\" -Target $exePath -Force -ErrorAction SilentlyContinue | Out-Null",
-    "    Write-Host \"Created shim to $exePath\" -ForegroundColor Green",
-    "  } else {",
-    "    Write-Host \"Warning: Mendix executable not found at $exePath\" -ForegroundColor Yellow",
-    "  }",
+    "$versionDir = Get-ChildItem $installPath -ErrorAction SilentlyContinue | Where-Object { $_.Name -like '{{.Version}}*' } | Select-Object -First 1",
+    "if ($versionDir) {",
+    "  Write-Host \"Mendix Studio Pro {{.Version}} installed successfully\" -ForegroundColor Green",
+    "  Write-Host \"Location: $installPath\\$($versionDir.Name)\" -ForegroundColor Cyan",
+    "  Write-Host \"Use Start Menu or run from: $installPath\\$($versionDir.Name)\\modeler\\Mendix.exe\" -ForegroundColor Cyan",
     "} else {",
-    "  Write-Host \"Warning: Could not find Mendix installation for version {{.Version}}\" -ForegroundColor Yellow",
+    "  Write-Host \"Warning: Could not verify Mendix installation\" -ForegroundColor Yellow",
     "}"
-  ],
-  "bin": "Mendix.exe",
-  "shortcuts": [
-    [
-      "Mendix.exe",
-      "Mendix Studio Pro {{.Version}}"
-    ]
   ],
   "uninstaller": {
     "script": [
