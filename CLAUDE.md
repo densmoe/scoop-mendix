@@ -8,7 +8,8 @@ Scoop bucket for Mendix Studio Pro versions.
 tools/manifest-generator/  Go CLI that generates Scoop manifests
   main.go                  CLI orchestration, SHA256 fetching, manifest completeness checks
   marketplace.go           Mendix Marketplace API client
-  templates.go             JSON manifest template (Scoop format)
+  templates.go             User-scope manifest template (Scoop format)
+  templates_machine.go     Machine-scope manifest template (Scoop format)
 bucket/                    Generated JSON manifests (Scoop format)
 .github/workflows/         CI + daily automation
 ```
@@ -67,29 +68,30 @@ The generator tries 4-part CDN URLs first and falls back to 3-part. The installe
 
 CDN base: `https://artifacts.rnd.mendix.com/modelers/`
 
-- **Machine x64**: `Mendix-{VERSION}-Setup.exe` (requires admin, NOT used in Scoop)
+- **Machine x64**: `Mendix-{VERSION}-Setup.exe` (requires admin, x64 only, runs on ARM via emulation)
 - **User x64**: `Mendix-{VERSION}-User-x64-Setup.exe` (available from 9.23.0+)
 - **User ARM64**: `Mendix-{VERSION}-User-arm64-Setup.exe` (available from 9.23.0+)
 
-**Scoop bucket only includes versions with user-scope installers** (9.23.0+) since Scoop is designed for non-admin installs.
+**Scoop bucket includes both user and machine installers** (9.23.0+):
+- User-scope: `mendix-studio-pro-{version}.json` (default, no admin, x64 + ARM64)
+- Machine-scope: `mendix-studio-pro-{version}-machine.json` (requires admin, x64 only)
 
 SHA256 sidecar files at `{url}.sha256` (available from 9.24.34+). For older versions (9.23.0-9.24.33), the generator downloads and computes hashes.
 
 ## Scoop Bucket Format
 
-- Each version is a separate JSON file: `mendix-studio-pro-{version}.json`
-- Scoop prefers user-scope installers (no admin required)
-- The manifest includes architecture-specific URLs (x64, ARM64)
-- Multiple versions can coexist side-by-side
+### Versioned Manifests (330 files)
+- User-scope: `mendix-studio-pro-{version}.json` (165 versions, x64 + ARM64)
+- Machine-scope: `mendix-studio-pro-{version}-machine.json` (165 versions, x64 only)
+- Each version installs independently, side-by-side coexistence supported
 
-### Alias Manifests
-
+### Alias Manifests (41 files, user-scope only)
 Aliases allow users to install "latest in branch" semantics:
 - `mendix-studio-pro.json` → latest overall
 - `mendix-studio-pro-10.json` → latest Mx10
 - `mendix-studio-pro-10.24.json` → latest 10.24.x
 
-These are generated automatically by the Go generator after creating versioned manifests.
+These are regenerated automatically by the Go generator after creating versioned manifests.
 
 ## Git Workflow
 
@@ -102,10 +104,13 @@ These are generated automatically by the Go generator after creating versioned m
 ### Mendix Installation Behavior
 
 1. **Executable name**: `studiopro.exe` (not `Mendix.exe`)
-2. **Install location**: `%LOCALAPPDATA%\Programs\Mendix\<version-with-build>\`
+2. **Install locations**:
+   - User-scope: `%LOCALAPPDATA%\Programs\Mendix\<version-with-build>\`
+   - Machine-scope: `%ProgramFiles%\Mendix\<version-with-build>\`
    - Example: `10.18.13.89970` or `11.9.1` (Mx11.5+ uses 3-part)
-3. **User vs Machine scope**: Only user-scope installers are supported (9.23.0+)
+3. **User vs Machine scope**: Both supported (9.23.0+)
 4. **Installer behavior**: Ignores `/DIR` parameter, always installs to default location
+5. **ARM architecture**: Machine installer is x64-only, runs on ARM via Windows x64 emulation
 
 ### Scoop Integration Approach
 
@@ -116,9 +121,10 @@ These are generated automatically by the Go generator after creating versioned m
 
 ### Version Management
 
-1. **Versioned manifests**: 165 manifests for specific versions (9.23.0-11.9.1)
-2. **Alias manifests**: 41 aliases for semantic version selection
-3. **Daily updates**: Automatically checks for new releases and updates both types
+1. **Versioned manifests**: 165 user + 165 machine = 330 manifests for specific versions (9.23.0-11.9.1)
+2. **Alias manifests**: 41 aliases for semantic version selection (user-scope only)
+3. **Total manifests**: 371 files in bucket/
+4. **Daily updates**: Automatically checks for new releases and updates both versioned and alias manifests
 
 ## Safety Rules
 
