@@ -1,0 +1,57 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build
+        run: |
+          cd tools/manifest-generator
+          go build ./...
+
+      - name: Test
+        run: |
+          cd tools/manifest-generator
+          go test ./...
+
+      - name: Vet
+        run: |
+          cd tools/manifest-generator
+          go vet ./...
+
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Scoop manifests
+        run: |
+          # Install Scoop if not present
+          if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+            iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
+          }
+
+          $manifests = Get-ChildItem bucket -Filter *.json -ErrorAction SilentlyContinue
+          if ($manifests) {
+            foreach ($manifest in $manifests) {
+              Write-Host "Validating $($manifest.Name)"
+              # Basic JSON validation
+              try {
+                $null = Get-Content $manifest.FullName | ConvertFrom-Json
+                Write-Host "✓ Valid JSON"
+              } catch {
+                Write-Error "Invalid JSON in $($manifest.Name): $_"
+                exit 1
+              }
+            }
+          } else {
+            Write-Host "No manifests to validate yet"
+          }
