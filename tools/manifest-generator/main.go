@@ -86,6 +86,13 @@ func main() {
 	for result := range resultChan {
 		fmt.Println(result)
 	}
+
+	// Generate alias manifests (e.g., mendix-studio-pro-10.json -> latest 10.x)
+	if !*dryRun {
+		fmt.Println("\nGenerating alias manifests...")
+		aliasCount := generateAliases(*bucketDir)
+		fmt.Printf("Generated %d alias manifest(s)\n", aliasCount)
+	}
 }
 
 func processRelease(release Release, bucketDir string, skipSHA, dryRun bool) string {
@@ -266,4 +273,129 @@ func computeSHA256FromURL(url string) (string, error) {
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+type versionInfo struct {
+	major, minor, patch int
+	fullVersion         string
+	manifestPath        string
+}
+
+func generateAliases(bucketDir string) int {
+	// Find all existing versioned manifests
+	pattern := filepath.Join(bucketDir, "mendix-studio-pro-*.json")
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error finding manifests: %v\n", err)
+		return 0
+	}
+
+	var versions []versionInfo
+	for _, path := range matches {
+		name := filepath.Base(path)
+		// Skip alias manifests (those without patch version)
+		versionStr := strings.TrimPrefix(name, "mendix-studio-pro-")
+		versionStr = strings.TrimSuffix(versionStr, ".json")
+		
+		parts := strings.Split(versionStr, ".")
+		if len(parts) != 3 {
+			continue // Skip non-standard names
+		}
+
+		var major, minor, patch int
+		if _, err := fmt.Sscanf(versionStr, "%d.%d.%d", &major, &minor, &patch); err != nil {
+			continue
+		}
+
+		versions = append(versions, versionInfo{
+			major:        major,
+			minor:        minor,
+			patch:        patch,
+			fullVersion:  versionStr,
+			manifestPath: path,
+		})
+	}
+
+	if len(versions) == 0 {
+		return 0
+	}
+
+	// Find latest for each category
+	latestOverall := versions[0]
+	latestByMajor := make(map[int]versionInfo)
+	latestByMinor := make(map[string]versionInfo)
+
+	for _, v := range versions {
+		// Latest overall
+		if versionCompare(v, latestOverall) > 0 {
+			latestOverall = v
+		}
+
+		// Latest for major version (e.g., 10, 11)
+		if existing, ok := latestByMajor[v.major]; !ok || versionCompare(v, existing) > 0 {
+			latestByMajor[v.major] = v
+		}
+
+		// Latest for minor version (e.g., 10.24, 11.9)
+		minorKey := fmt.Sprintf("%d.%d", v.major, v.minor)
+		if existing, ok := latestByMinor[minorKey]; !ok || versionCompare(v, existing) > 0 {
+			latestByMinor[minorKey] = v
+		}
+	}
+
+	aliasCount := 0
+
+	// Create "mendix-studio-pro.json" -> latest overall
+	if err := createAliasManifest(bucketDir, "mendix-studio-pro.json", latestOverall.manifestPath); err != nil {
+		fmt.Fprintf(os.Stderr, "  Error creating latest alias: %v\n", err)
+	} else {
+		fmt.Printf("  mendix-studio-pro.json -> %s\n", latestOverall.fullVersion)
+		aliasCount++
+	}
+
+	// Create "mendix-studio-pro-N.json" -> latest N.x
+	for major, v := range latestByMajor {
+		aliasName := fmt.Sprintf("mendix-studio-pro-%d.json", major)
+		if err := createAliasManifest(bucketDir, aliasName, v.manifestPath); err != nil {
+			fmt.Fprintf(os.Stderr, "  Error creating major alias %d: %v\n", major, err)
+		} else {
+			fmt.Printf("  mendix-studio-pro-%d.json -> %s\n", major, v.fullVersion)
+			aliasCount++
+		}
+	}
+
+	// Create "mendix-studio-pro-N.M.json" -> latest N.M.x
+	for minorKey, v := range latestByMinor {
+		aliasName := fmt.Sprintf("mendix-studio-pro-%s.json", minorKey)
+		if err := createAliasManifest(bucketDir, aliasName, v.manifestPath); err != nil {
+			fmt.Fprintf(os.Stderr, "  Error creating minor alias %s: %v\n", minorKey, err)
+		} else {
+			fmt.Printf("  mendix-studio-pro-%s.json -> %s\n", minorKey, v.fullVersion)
+			aliasCount++
+		}
+	}
+
+	return aliasCount
+}
+
+func versionCompare(a, b versionInfo) int {
+	if a.major != b.major {
+		return a.major - b.major
+	}
+	if a.minor != b.minor {
+		return a.minor - b.minor
+	}
+	return a.patch - b.patch
+}
+
+func createAliasManifest(bucketDir, aliasName, sourcePath string) error {
+	// Read the source manifest
+	content, err := os.ReadFile(sourcePath)
+	if err != nil {
+		return err
+	}
+
+	// Write to alias path
+	aliasPath := filepath.Join(bucketDir, aliasName)
+	return os.WriteFile(aliasPath, content, 0644)
 }
