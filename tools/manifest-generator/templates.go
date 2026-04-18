@@ -17,7 +17,7 @@ var scoopManifestTemplate = template.Must(template.New("scoop").Parse(`{
       ],
       "installer": {
         "script": [
-          "$installerPath = \"$dir\\Mendix-{{.Version}}-User-x64-Setup.exe\"",
+          "$installerPath = Get-ChildItem \"$dir\\Mendix-*-User-x64-Setup.exe\" | Select-Object -First 1 -ExpandProperty FullName",
           "Start-Process -Wait -FilePath $installerPath -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DIR=\"$dir\\app\"'"
         ]
       }
@@ -31,7 +31,7 @@ var scoopManifestTemplate = template.Must(template.New("scoop").Parse(`{
       ],
       "installer": {
         "script": [
-          "$installerPath = \"$dir\\Mendix-{{.Version}}-User-arm64-Setup.exe\"",
+          "$installerPath = Get-ChildItem \"$dir\\Mendix-*-User-arm64-Setup.exe\" | Select-Object -First 1 -ExpandProperty FullName",
           "Start-Process -Wait -FilePath $installerPath -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DIR=\"$dir\\app\"'"
         ]
       }

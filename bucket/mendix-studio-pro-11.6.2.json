@@ -13,7 +13,7 @@
       ],
       "installer": {
         "script": [
-          "$installerPath = \"$dir\\Mendix-11.6.2-User-x64-Setup.exe\"",
+          "$installerPath = Get-ChildItem \"$dir\\Mendix-*-User-x64-Setup.exe\" | Select-Object -First 1 -ExpandProperty FullName",
           "Start-Process -Wait -FilePath $installerPath -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DIR=\"$dir\\app\"'"
         ]
       }
@@ -27,7 +27,7 @@
       ],
       "installer": {
         "script": [
-          "$installerPath = \"$dir\\Mendix-11.6.2-User-arm64-Setup.exe\"",
+          "$installerPath = Get-ChildItem \"$dir\\Mendix-*-User-arm64-Setup.exe\" | Select-Object -First 1 -ExpandProperty FullName",
           "Start-Process -Wait -FilePath $installerPath -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DIR=\"$dir\\app\"'"
         ]
       }
