@@ -1,0 +1,48 @@
+{
+  "version": "11.3.0",
+  "description": "Low-code application development platform",
+  "homepage": "https://www.mendix.com/studio-pro/",
+  "license": "Proprietary",
+  "architecture": {
+    "64bit": {
+      "url": [
+        "https://artifacts.rnd.mendix.com/modelers/Mendix-11.3.0.80734-User-x64-Setup.exe"
+      ],
+      "hash": [
+        "3525A4D738002559B3214F26BEBA1CF584428E34470BD872DE36738069FC09B7"
+      ],
+      "installer": {
+        "script": [
+          "$installerPath = \"$dir\\Mendix-11.3.0-User-x64-Setup.exe\"",
+          "Start-Process -Wait -FilePath $installerPath -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DIR=\"$dir\\app\"'"
+        ]
+      }
+    },
+    "arm64": {
+      "url": [
+        "https://artifacts.rnd.mendix.com/modelers/Mendix-11.3.0.80734-User-arm64-Setup.exe"
+      ],
+      "hash": [
+        "9DF9DC0331CA4333295CA11563FB73B70DC9007ED77DEFE930B84B8D4D9D677B"
+      ],
+      "installer": {
+        "script": [
+          "$installerPath = \"$dir\\Mendix-11.3.0-User-arm64-Setup.exe\"",
+          "Start-Process -Wait -FilePath $installerPath -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DIR=\"$dir\\app\"'"
+        ]
+      }
+    }
+  },
+  "bin": "app\\bin\\mendix.exe",
+  "shortcuts": [
+    [
+      "app\\bin\\mendix.exe",
+      "Mendix Studio Pro 11.3.0"
+    ]
+  ],
+  "checkver": {
+    "url": "https://marketplace.mendix.com/link/studiopro/",
+    "jsonpath": "$.version"
+  },
+  "notes": "Multiple versions can be installed side-by-side by installing with version-specific names."
+}
