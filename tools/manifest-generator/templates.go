@@ -34,7 +34,7 @@ var scoopManifestTemplate = template.Must(template.New("scoop").Parse(`{
     "if ($versionDir) {",
     "  Write-Host \"Mendix Studio Pro {{.Version}} installed successfully\" -ForegroundColor Green",
     "  Write-Host \"Location: $installPath\\$($versionDir.Name)\" -ForegroundColor Cyan",
-    "  Write-Host \"Use Start Menu or run from: $installPath\\$($versionDir.Name)\\modeler\\Mendix.exe\" -ForegroundColor Cyan",
+    "  Write-Host \"Executable: $installPath\\$($versionDir.Name)\\modeler\\studiopro.exe\" -ForegroundColor Cyan",
     "} else {",
     "  Write-Host \"Warning: Could not verify Mendix installation\" -ForegroundColor Yellow",
     "}"
