@@ -27,11 +27,27 @@ scoop install mendix/mendix-studio-pro-10.24
 ### Specific version
 
 ```powershell
-# Exact version
+# Exact version (user-scope, no admin required)
 scoop install mendix/mendix-studio-pro-11.9.1
 scoop install mendix/mendix-studio-pro-10.18.13
 scoop install mendix/mendix-studio-pro-9.24.42
 ```
+
+## Machine-scope Installation
+
+For system-wide installation (requires admin rights):
+
+```powershell
+# User-scope (default, no admin)
+scoop install mendix/mendix-studio-pro-11.9.1
+
+# Machine-scope (requires admin, x64 only)
+scoop install mendix/mendix-studio-pro-11.9.1-machine
+```
+
+**Differences:**
+- **User-scope**: Installs to `%LOCALAPPDATA%\Programs\Mendix\`, no admin, supports ARM64
+- **Machine-scope**: Installs to `%ProgramFiles%\Mendix\`, requires admin, x64 only
 
 ## List available versions
 

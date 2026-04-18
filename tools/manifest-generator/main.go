@@ -98,8 +98,13 @@ func main() {
 func processRelease(release Release, bucketDir string, skipSHA, dryRun bool) string {
 	manifestVersion := manifestVersionFor(release)
 	manifestPath := filepath.Join(bucketDir, fmt.Sprintf("mendix-studio-pro-%s.json", manifestVersion))
+	machinePath := filepath.Join(bucketDir, fmt.Sprintf("mendix-studio-pro-%s-machine.json", manifestVersion))
 
-	if manifestComplete(manifestPath) {
+	// Check if both user and machine manifests are complete
+	userComplete := manifestComplete(manifestPath)
+	machineComplete := manifestComplete(machinePath)
+
+	if userComplete && machineComplete {
 		return fmt.Sprintf("Skipping %s (complete)", manifestVersion)
 	}
 
@@ -107,14 +112,19 @@ func processRelease(release Release, bucketDir string, skipSHA, dryRun bool) str
 	shortRelease := release
 	shortRelease.VersionFull = manifestVersion
 
+	// User-scope installers
 	userX64URL := fmt.Sprintf("https://artifacts.rnd.mendix.com/modelers/Mendix-%s-User-x64-Setup.exe", release.VersionFull)
 	userARM64URL := fmt.Sprintf("https://artifacts.rnd.mendix.com/modelers/Mendix-%s-User-arm64-Setup.exe", release.VersionFull)
+
+	// Machine-scope installer (x64 only, no arch suffix)
+	machineURL := fmt.Sprintf("https://artifacts.rnd.mendix.com/modelers/Mendix-%s-Setup.exe", release.VersionFull)
 
 	// Check if URLs exist, fall back to 3-part if needed
 	if !urlExists(userX64URL) {
 		if release.VersionFull != manifestVersion {
 			userX64URL = fmt.Sprintf("https://artifacts.rnd.mendix.com/modelers/Mendix-%s-User-x64-Setup.exe", manifestVersion)
 			userARM64URL = fmt.Sprintf("https://artifacts.rnd.mendix.com/modelers/Mendix-%s-User-arm64-Setup.exe", manifestVersion)
+			machineURL = fmt.Sprintf("https://artifacts.rnd.mendix.com/modelers/Mendix-%s-Setup.exe", manifestVersion)
 			if !urlExists(userX64URL) {
 				return fmt.Sprintf("%s: user x64 installer not found", manifestVersion)
 			}
@@ -123,22 +133,35 @@ func processRelease(release Release, bucketDir string, skipSHA, dryRun bool) str
 		}
 	}
 
-	// x64 is required, ARM64 is optional
-	var userX64SHA, userARM64SHA string
+	// Fetch SHA256 hashes
+	var userX64SHA, userARM64SHA, machineSHA string
 	if skipSHA {
 		userX64SHA = "SHA256_PLACEHOLDER"
 		userARM64SHA = "SHA256_PLACEHOLDER"
+		machineSHA = "SHA256_PLACEHOLDER"
 	} else {
 		var err error
-		userX64SHA, err = fetchSHA256(userX64URL)
-		if err != nil {
-			return fmt.Sprintf("%s: failed to get x64 hash: %v", manifestVersion, err)
+
+		// User x64 is required
+		if !userComplete {
+			userX64SHA, err = fetchSHA256(userX64URL)
+			if err != nil {
+				return fmt.Sprintf("%s: failed to get user x64 hash: %v", manifestVersion, err)
+			}
+
+			// ARM64 is optional
+			userARM64SHA, err = fetchSHA256(userARM64URL)
+			if err != nil {
+				userARM64SHA = "" // ARM64 installer doesn't exist for this version
+			}
 		}
 
-		// ARM64 is optional - if it doesn't exist, we'll handle it in the template
-		userARM64SHA, err = fetchSHA256(userARM64URL)
-		if err != nil {
-			userARM64SHA = "" // ARM64 installer doesn't exist for this version
+		// Machine installer
+		if !machineComplete {
+			machineSHA, err = fetchSHA256(machineURL)
+			if err != nil {
+				return fmt.Sprintf("%s: failed to get machine hash: %v", manifestVersion, err)
+			}
 		}
 	}
 
@@ -150,25 +173,57 @@ func processRelease(release Release, bucketDir string, skipSHA, dryRun bool) str
 		return fmt.Sprintf("%s: failed to create directory: %v", manifestVersion, err)
 	}
 
-	data := ScoopManifestData{
-		Version:         manifestVersion,
-		UserX64URL:      userX64URL,
-		UserX64SHA256:   userX64SHA,
-		UserARM64URL:    userARM64URL,
-		UserARM64SHA256: userARM64SHA,
+	results := []string{}
+
+	// Write user-scope manifest
+	if !userComplete {
+		userData := ScoopManifestData{
+			Version:         manifestVersion,
+			UserX64URL:      userX64URL,
+			UserX64SHA256:   userX64SHA,
+			UserARM64URL:    userARM64URL,
+			UserARM64SHA256: userARM64SHA,
+		}
+
+		f, err := os.Create(manifestPath)
+		if err != nil {
+			return fmt.Sprintf("%s: failed to create user manifest: %v", manifestVersion, err)
+		}
+
+		if err := scoopManifestTemplate.Execute(f, userData); err != nil {
+			f.Close()
+			return fmt.Sprintf("%s: failed to write user manifest: %v", manifestVersion, err)
+		}
+		f.Close()
+		results = append(results, "user")
 	}
 
-	f, err := os.Create(manifestPath)
-	if err != nil {
-		return fmt.Sprintf("%s: failed to create manifest: %v", manifestVersion, err)
-	}
-	defer f.Close()
+	// Write machine-scope manifest
+	if !machineComplete {
+		machineData := ScoopMachineManifestData{
+			Version:       manifestVersion,
+			MachineURL:    machineURL,
+			MachineSHA256: machineSHA,
+		}
 
-	if err := scoopManifestTemplate.Execute(f, data); err != nil {
-		return fmt.Sprintf("%s: failed to write manifest: %v", manifestVersion, err)
+		f, err := os.Create(machinePath)
+		if err != nil {
+			return fmt.Sprintf("%s: failed to create machine manifest: %v", manifestVersion, err)
+		}
+
+		if err := scoopMachineManifestTemplate.Execute(f, machineData); err != nil {
+			f.Close()
+			return fmt.Sprintf("%s: failed to write machine manifest: %v", manifestVersion, err)
+		}
+		f.Close()
+		results = append(results, "machine")
 	}
 
-	return fmt.Sprintf("%s: created manifest", manifestVersion)
+	if len(results) == 0 {
+		return fmt.Sprintf("%s: already complete", manifestVersion)
+	}
+
+	return fmt.Sprintf("%s: created %s", manifestVersion, strings.Join(results, " + "))
 }
 
 func manifestVersionFor(r Release) string {
@@ -293,10 +348,16 @@ func generateAliases(bucketDir string) int {
 	var versions []versionInfo
 	for _, path := range matches {
 		name := filepath.Base(path)
+
+		// Skip machine manifests (we only alias user-scope)
+		if strings.Contains(name, "-machine.json") {
+			continue
+		}
+
 		// Skip alias manifests (those without patch version)
 		versionStr := strings.TrimPrefix(name, "mendix-studio-pro-")
 		versionStr = strings.TrimSuffix(versionStr, ".json")
-		
+
 		parts := strings.Split(versionStr, ".")
 		if len(parts) != 3 {
 			continue // Skip non-standard names
