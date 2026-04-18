@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Import SHA256 hashes from winget manifests into Scoop manifests"""
+"""Import SHA256 hashes from winget manifests into Scoop manifests
+
+This script extracts SHA256 hashes from winget-mendix manifests and updates
+the corresponding Scoop manifests. This is necessary because:
+
+1. SHA256 sidecar files (.sha256) only exist on CDN from 9.24.34+
+2. For older versions (9.23.0-9.24.33), computing hashes requires downloading
+   multi-GB installers
+3. Winget already has all hashes computed, so we can reuse them
+
+The script only processes versions that:
+- Have user-scope installers (9.23.0+)
+- Have both x64 and arm64 hashes in winget
+"""
 
 import json
 import re

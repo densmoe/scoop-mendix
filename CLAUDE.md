@@ -63,11 +63,13 @@ The generator tries 4-part CDN URLs first and falls back to 3-part. The installe
 
 CDN base: `https://artifacts.rnd.mendix.com/modelers/`
 
-- **Machine x64**: `Mendix-{VERSION}-Setup.exe`
-- **User x64**: `Mendix-{VERSION}-User-x64-Setup.exe`
-- **User ARM64**: `Mendix-{VERSION}-User-arm64-Setup.exe`
+- **Machine x64**: `Mendix-{VERSION}-Setup.exe` (requires admin, NOT used in Scoop)
+- **User x64**: `Mendix-{VERSION}-User-x64-Setup.exe` (available from 9.23.0+)
+- **User ARM64**: `Mendix-{VERSION}-User-arm64-Setup.exe` (available from 9.23.0+)
 
-SHA256 sidecar files at `{url}.sha256` (available from 9.24.34+). Older versions need full download for hash computation.
+**Scoop bucket only includes versions with user-scope installers** (9.23.0+) since Scoop is designed for non-admin installs.
+
+SHA256 sidecar files at `{url}.sha256` (available from 9.24.34+). For older versions (9.23.0-9.24.33), hashes are imported from winget-mendix manifests.
 
 ## Scoop Bucket Format
 
