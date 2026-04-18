@@ -31,8 +31,8 @@ See [USAGE.md](USAGE.md) for more examples.
 
 - **Semantic version selection**: Install by major (`-10`), minor (`-10.24`), or exact version
 - **Side-by-side versions**: Multiple Studio Pro versions can coexist
-- **User-scope install**: No admin rights required (Mendix 9.23.0+)
-- **Architecture support**: x64 and ARM64 installers
+- **User-scope install**: No admin rights required (x64 + ARM64, Mendix 9.23.0+)
+- **Machine-scope install**: System-wide installation available (x64 only, requires admin)
 - **Daily updates**: Automatic manifest generation for new releases
 
 ## Developer Setup
@@ -61,19 +61,20 @@ go run . -bucket-dir ../../bucket -min-major 9
 ## How It Works
 
 1. **Queries Mendix Marketplace API** for all Studio Pro releases
-2. **Generates versioned manifests** (e.g., `mendix-studio-pro-10.18.13.json`) for each version
-3. **Generates alias manifests** (e.g., `mendix-studio-pro-10.json` → latest 10.x)
+2. **Generates versioned manifests** for each version (user + machine scope)
+3. **Generates alias manifests** for semantic version selection (user-scope only)
 4. **Fetches SHA256 hashes** from CDN `.sha256` sidecar files (9.24.34+) or computes them
 5. **Runs daily via GitHub Actions** to catch new releases (up to 10 per day)
 
 ### Manifest Types
 
-**Versioned manifests** (165 files):
-- Exact version: `mendix-studio-pro-10.18.13.json`
-- Points to specific installer on CDN
+**Versioned manifests** (330 files):
+- User-scope: `mendix-studio-pro-10.18.13.json` (x64 + ARM64, no admin)
+- Machine-scope: `mendix-studio-pro-10.18.13-machine.json` (x64 only, requires admin)
+- Each points to specific installer on CDN
 - Immutable after creation
 
-**Alias manifests** (41 files):
+**Alias manifests** (41 files, user-scope only):
 - Major: `mendix-studio-pro-10.json` → latest 10.x
 - Minor: `mendix-studio-pro-10.24.json` → latest 10.24.x
 - Latest: `mendix-studio-pro.json` → newest overall
@@ -81,7 +82,7 @@ go run . -bucket-dir ../../bucket -min-major 9
 
 ### Installation Details
 
-Mendix Studio Pro installs to `%LOCALAPPDATA%\Programs\Mendix\<version>\` and registers itself in the Start Menu. Scoop tracks the installation via the Windows registry and can uninstall it, but does not create command-line shims. Users launch Mendix via the Start Menu or directly from the install location.
+Mendix Studio Pro installs to `%LOCALAPPDATA%\Programs\Mendix\<version>\` (user-scope) or `%ProgramFiles%\Mendix\<version>\` (machine-scope) and registers itself in the Start Menu. Scoop tracks the installation via the Windows registry and can uninstall it, but does not create command-line shims. Users launch Mendix via the Start Menu or directly from the install location.
 
 ## Related Projects
 
