@@ -27,13 +27,6 @@ The generator fetches SHA256 hashes automatically:
 1. First tries `.sha256` sidecar files (available from 9.24.34+)
 2. Falls back to downloading and computing hash (slower, for older versions)
 
-### Import hashes from winget (one-time bootstrap only)
-```bash
-python3 tools/import-hashes.py
-```
-
-This was used for initial setup to avoid downloading 165 multi-GB installers. **Not needed for daily operations** — the Go generator handles new versions automatically.
-
 ### Run tests
 ```bash
 cd tools/manifest-generator
@@ -80,7 +73,7 @@ CDN base: `https://artifacts.rnd.mendix.com/modelers/`
 
 **Scoop bucket only includes versions with user-scope installers** (9.23.0+) since Scoop is designed for non-admin installs.
 
-SHA256 sidecar files at `{url}.sha256` (available from 9.24.34+). For older versions (9.23.0-9.24.33), hashes are imported from winget-mendix manifests.
+SHA256 sidecar files at `{url}.sha256` (available from 9.24.34+). For older versions (9.23.0-9.24.33), the generator downloads and computes hashes.
 
 ## Scoop Bucket Format
 
