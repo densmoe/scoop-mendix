@@ -23,6 +23,17 @@ go run . -bucket-dir ../../bucket -skip-sha      # Fast mode (placeholder hashes
 go run . -bucket-dir ../../bucket -dry-run       # Preview only
 ```
 
+The generator fetches SHA256 hashes automatically:
+1. First tries `.sha256` sidecar files (available from 9.24.34+)
+2. Falls back to downloading and computing hash (slower, for older versions)
+
+### Import hashes from winget (one-time bootstrap only)
+```bash
+python3 tools/import-hashes.py
+```
+
+This was used for initial setup to avoid downloading 165 multi-GB installers. **Not needed for daily operations** — the Go generator handles new versions automatically.
+
 ### Run tests
 ```bash
 cd tools/manifest-generator
