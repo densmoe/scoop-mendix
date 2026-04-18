@@ -48,12 +48,16 @@ The generator runs on any OS (Linux, macOS, Windows). No external tools needed �
 
 ## Mendix Version Patterns
 
-- **Mx9**: 4-part `9.24.35.71123`, manifest version = `9.24.35`
-- **Mx10**: 4-part `10.18.0.54340`, manifest version = `10.18.0`
-- **Mx11.0–11.4**: 4-part URLs on CDN, 3-part manifest version
-- **Mx11.5+**: 3-part everywhere (`11.5.0`)
+**Manifest version** (in JSON filename and `version` field):
+- All versions: 3-part semantic version (e.g., `9.24.42`, `10.18.13`, `11.5.0`)
 
-The generator tries 4-part CDN URLs first and falls back to 3-part.
+**CDN installer filenames**:
+- **Mx9 all**: 4-part `Mendix-9.24.42.98709-User-x64-Setup.exe`
+- **Mx10 all**: 4-part `Mendix-10.18.13.89970-User-x64-Setup.exe`
+- **Mx11.0–11.4**: 4-part `Mendix-11.4.0.83498-User-x64-Setup.exe`
+- **Mx11.5+**: 3-part `Mendix-11.5.0-User-x64-Setup.exe`
+
+The generator tries 4-part CDN URLs first and falls back to 3-part. The installer script uses wildcards (`Get-ChildItem "Mendix-*-User-x64-Setup.exe"`) to handle both patterns.
 
 ## Installer URLs
 
