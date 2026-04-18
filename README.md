@@ -8,21 +8,32 @@ Scoop bucket for Mendix Studio Pro - side-by-side version management on Windows.
 # Add the bucket
 scoop bucket add mendix https://github.com/densmoe/scoop-mendix
 
-# Install a specific version
-scoop install mendix/mendix-studio-pro-10.0.0
+# Install latest version
+scoop install mendix/mendix-studio-pro
+
+# Install latest Mx10 or Mx11
+scoop install mendix/mendix-studio-pro-10
+scoop install mendix/mendix-studio-pro-11
+
+# Install latest patch in a minor version
+scoop install mendix/mendix-studio-pro-10.24
+
+# Install exact version
+scoop install mendix/mendix-studio-pro-10.18.13
 
 # List available versions
 scoop search mendix
 ```
 
-## Architecture Support
+See [USAGE.md](USAGE.md) for more examples.
 
-Each version includes up to three installer variants:
-- **Machine x64** — traditional admin installer
-- **User x64** — no admin required (default)
-- **User ARM64** — no admin required, for ARM devices
+## Features
 
-Scoop prefers user-scope installers, so the manifest defaults to the user x64 variant. Use `--arch arm64` for ARM devices.
+- **Semantic version selection**: Install by major (`-10`), minor (`-10.24`), or exact version
+- **Side-by-side versions**: Multiple Studio Pro versions can coexist
+- **User-scope install**: No admin rights required (Mendix 9.23.0+)
+- **Architecture support**: x64 and ARM64 installers
+- **Daily updates**: Automatic manifest generation for new releases
 
 ## Developer Setup
 
@@ -49,25 +60,28 @@ go run . -bucket-dir ../../bucket -min-major 9
 
 ## How It Works
 
-1. Queries Mendix Marketplace API for all Studio Pro releases
-2. Filters by version type (LTS/MTS/Stable) and minimum version
-3. Skips versions that already have complete manifests
-4. Validates installer availability on CDN (HEAD request + Content-Length > 100MB to detect error pages)
-5. Fetches SHA256 hashes from CDN `.sha256` sidecar files, or streams the full download for older versions
-6. Generates one JSON manifest per version in Scoop format
+1. **Queries Mendix Marketplace API** for all Studio Pro releases
+2. **Generates versioned manifests** (e.g., `mendix-studio-pro-10.18.13.json`) for each version
+3. **Generates alias manifests** (e.g., `mendix-studio-pro-10.json` → latest 10.x)
+4. **Fetches SHA256 hashes** from CDN `.sha256` sidecar files (9.24.34+) or computes them
+5. **Runs daily via GitHub Actions** to catch new releases (up to 10 per day)
 
-### Daily Automation
+### Manifest Types
 
-The GitHub Actions workflow runs daily and processes up to 10 new versions per run, catching up incrementally as new Mendix releases are published.
+**Versioned manifests** (165 files):
+- Exact version: `mendix-studio-pro-10.18.13.json`
+- Points to specific installer on CDN
+- Immutable after creation
 
-## Scoop Manifest Format
+**Alias manifests** (41 files):
+- Major: `mendix-studio-pro-10.json` → latest 10.x
+- Minor: `mendix-studio-pro-10.24.json` → latest 10.24.x
+- Latest: `mendix-studio-pro.json` → newest overall
+- Regenerated when new versions are published
 
-Each version gets a single JSON file (e.g., `mendix-studio-pro-10.0.0.json`) with:
-- Version number
-- Download URLs for all three installer variants (x64 machine/user, ARM64 user)
-- SHA256 hashes
-- Architecture-specific installer switches
-- Side-by-side installation support via `persist` directory
+### Installation Details
+
+Mendix Studio Pro installs to `%LOCALAPPDATA%\Programs\Mendix\<version>\` and registers itself in the Start Menu. Scoop tracks the installation via the Windows registry and can uninstall it, but does not create command-line shims. Users launch Mendix via the Start Menu or directly from the install location.
 
 ## Related Projects
 

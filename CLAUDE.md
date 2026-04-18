@@ -79,13 +79,46 @@ SHA256 sidecar files at `{url}.sha256` (available from 9.24.34+). For older vers
 
 - Each version is a separate JSON file: `mendix-studio-pro-{version}.json`
 - Scoop prefers user-scope installers (no admin required)
-- The manifest includes all three installer variants with architecture-specific URLs
+- The manifest includes architecture-specific URLs (x64, ARM64)
 - Multiple versions can coexist side-by-side
+
+### Alias Manifests
+
+Aliases allow users to install "latest in branch" semantics:
+- `mendix-studio-pro.json` → latest overall
+- `mendix-studio-pro-10.json` → latest Mx10
+- `mendix-studio-pro-10.24.json` → latest 10.24.x
+
+These are generated automatically by the Go generator after creating versioned manifests.
 
 ## Git Workflow
 
 - Default branch: `main`
 - Daily workflow commits new manifests automatically (up to 10/day)
+- Workflow regenerates both versioned manifests AND alias manifests
+
+## Key Learnings
+
+### Mendix Installation Behavior
+
+1. **Executable name**: `studiopro.exe` (not `Mendix.exe`)
+2. **Install location**: `%LOCALAPPDATA%\Programs\Mendix\<version-with-build>\`
+   - Example: `10.18.13.89970` or `11.9.1` (Mx11.5+ uses 3-part)
+3. **User vs Machine scope**: Only user-scope installers are supported (9.23.0+)
+4. **Installer behavior**: Ignores `/DIR` parameter, always installs to default location
+
+### Scoop Integration Approach
+
+1. **Don't fight the installer**: Let Mendix install where it wants
+2. **No shimming needed**: Mendix registers itself in Start Menu
+3. **Scoop tracks**: Installation/uninstallation via registry
+4. **User access**: Via Start Menu or direct path
+
+### Version Management
+
+1. **Versioned manifests**: 165 manifests for specific versions (9.23.0-11.9.1)
+2. **Alias manifests**: 41 aliases for semantic version selection
+3. **Daily updates**: Automatically checks for new releases and updates both types
 
 ## Safety Rules
 

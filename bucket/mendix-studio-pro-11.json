@@ -6,11 +6,11 @@
   "architecture": {
     "64bit": {
       "url": "https://artifacts.rnd.mendix.com/modelers/Mendix-11.9.1-User-x64-Setup.exe",
-      "hash": "E61432E8CAA34818B85B47C59BF59DA770410F878C9D0D1BD5DD0A4A3E5D9736"
+      "hash": "e61432e8caa34818b85b47c59bf59da770410f878c9d0d1bd5dd0a4a3e5d9736"
     },
     "arm64": {
       "url": "https://artifacts.rnd.mendix.com/modelers/Mendix-11.9.1-User-arm64-Setup.exe",
-      "hash": "380D8CBF4F9129AB07C17D4770FB407F359DB56F17FAE0B00596307D2274636E"
+      "hash": "380d8cbf4f9129ab07c17d4770fb407f359db56f17fae0b00596307d2274636e"
     }
   },
   "pre_install": [
