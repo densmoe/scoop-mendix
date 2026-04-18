@@ -5,44 +5,38 @@
   "license": "Proprietary",
   "architecture": {
     "64bit": {
-      "url": [
-        "https://artifacts.rnd.mendix.com/modelers/Mendix-10.21.1.64969-User-x64-Setup.exe"
-      ],
-      "hash": [
-        "B3A4F2723A9083A9EA74FEDFABF6CC95558EA38CA136F55B8EB7B8470D0E1282"
-      ],
-      "installer": {
-        "script": [
-          "$installerPath = Get-ChildItem \"$dir\\Mendix-*-User-x64-Setup.exe\" | Select-Object -First 1 -ExpandProperty FullName",
-          "Start-Process -Wait -FilePath $installerPath -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DIR=\"$dir\\app\"'"
-        ]
-      }
+      "url": "https://artifacts.rnd.mendix.com/modelers/Mendix-10.21.1.64969-User-x64-Setup.exe",
+      "hash": "B3A4F2723A9083A9EA74FEDFABF6CC95558EA38CA136F55B8EB7B8470D0E1282"
     },
     "arm64": {
-      "url": [
-        "https://artifacts.rnd.mendix.com/modelers/Mendix-10.21.1.64969-User-arm64-Setup.exe"
-      ],
-      "hash": [
-        "77E108F70F71685C22BB5AFDD683E6E520C821D9C6D8954F265CD8D49F1B644B"
-      ],
-      "installer": {
-        "script": [
-          "$installerPath = Get-ChildItem \"$dir\\Mendix-*-User-arm64-Setup.exe\" | Select-Object -First 1 -ExpandProperty FullName",
-          "Start-Process -Wait -FilePath $installerPath -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/DIR=\"$dir\\app\"'"
-        ]
-      }
+      "url": "https://artifacts.rnd.mendix.com/modelers/Mendix-10.21.1.64969-User-arm64-Setup.exe",
+      "hash": "77E108F70F71685C22BB5AFDD683E6E520C821D9C6D8954F265CD8D49F1B644B"
     }
   },
-  "bin": "app\\bin\\mendix.exe",
+  "innosetup": true,
+  "post_install": [
+    "$installPath = \"$env:LOCALAPPDATA\\Programs\\Mendix\"",
+    "$version = Get-ChildItem $installPath | Where-Object { $_.Name -like '10.21.1*' } | Select-Object -First 1 -ExpandProperty Name",
+    "$exePath = \"$installPath\\$version\\modeler\\Mendix.exe\"",
+    "if (Test-Path $exePath) {",
+    "  New-Item -ItemType SymbolicLink -Path \"$dir\\Mendix.exe\" -Target $exePath -Force | Out-Null",
+    "} else {",
+    "  Write-Host \"Warning: Mendix executable not found at $exePath\" -ForegroundColor Yellow",
+    "}"
+  ],
+  "bin": "Mendix.exe",
   "shortcuts": [
     [
-      "app\\bin\\mendix.exe",
+      "Mendix.exe",
       "Mendix Studio Pro 10.21.1"
     ]
   ],
+  "uninstaller": {
+    "script": "Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' | Where-Object { $_.DisplayName -like '*Mendix*10.21.1*' } | ForEach-Object { Start-Process -Wait ($_.UninstallString -replace '\"','') -ArgumentList '/VERYSILENT' }"
+  },
   "checkver": {
     "url": "https://marketplace.mendix.com/link/studiopro/",
     "jsonpath": "$.version"
   },
-  "notes": "Multiple versions can be installed side-by-side by installing with version-specific names."
+  "notes": "Mendix Studio Pro installs to %LOCALAPPDATA%\\Programs\\Mendix\\<version>. Multiple versions can coexist."
 }
