@@ -13,15 +13,30 @@
       "hash": "646279BAFEE176AA8B7E473E1832B599B5FC2F71EB2F61B959E1F7AE4E4F8EE9"
     }
   },
-  "innosetup": true,
+  "pre_install": [
+    "$installerPath = Get-ChildItem \"$dir\\Mendix-*-User-*.exe\" | Select-Object -First 1 -ExpandProperty FullName",
+    "if ($installerPath) {",
+    "  Write-Host \"Running Mendix installer...\" -ForegroundColor Cyan",
+    "  Start-Process -Wait -FilePath $installerPath -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'",
+    "  Write-Host \"Installation complete\" -ForegroundColor Green",
+    "} else {",
+    "  Write-Host \"Installer not found\" -ForegroundColor Red",
+    "  exit 1",
+    "}"
+  ],
   "post_install": [
     "$installPath = \"$env:LOCALAPPDATA\\Programs\\Mendix\"",
-    "$version = Get-ChildItem $installPath | Where-Object { $_.Name -like '9.24.22*' } | Select-Object -First 1 -ExpandProperty Name",
-    "$exePath = \"$installPath\\$version\\modeler\\Mendix.exe\"",
-    "if (Test-Path $exePath) {",
-    "  New-Item -ItemType SymbolicLink -Path \"$dir\\Mendix.exe\" -Target $exePath -Force | Out-Null",
+    "$version = Get-ChildItem $installPath -ErrorAction SilentlyContinue | Where-Object { $_.Name -like '9.24.22*' } | Select-Object -First 1 -ExpandProperty Name",
+    "if ($version) {",
+    "  $exePath = \"$installPath\\$version\\modeler\\Mendix.exe\"",
+    "  if (Test-Path $exePath) {",
+    "    New-Item -ItemType SymbolicLink -Path \"$dir\\Mendix.exe\" -Target $exePath -Force -ErrorAction SilentlyContinue | Out-Null",
+    "    Write-Host \"Created shim to $exePath\" -ForegroundColor Green",
+    "  } else {",
+    "    Write-Host \"Warning: Mendix executable not found at $exePath\" -ForegroundColor Yellow",
+    "  }",
     "} else {",
-    "  Write-Host \"Warning: Mendix executable not found at $exePath\" -ForegroundColor Yellow",
+    "  Write-Host \"Warning: Could not find Mendix installation for version 9.24.22\" -ForegroundColor Yellow",
     "}"
   ],
   "bin": "Mendix.exe",
@@ -32,7 +47,16 @@
     ]
   ],
   "uninstaller": {
-    "script": "Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' | Where-Object { $_.DisplayName -like '*Mendix*9.24.22*' } | ForEach-Object { Start-Process -Wait ($_.UninstallString -replace '\"','') -ArgumentList '/VERYSILENT' }"
+    "script": [
+      "$uninstallKey = Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like '*Mendix*9.24.22*' } | Select-Object -First 1",
+      "if ($uninstallKey -and $uninstallKey.UninstallString) {",
+      "  $uninstallCmd = $uninstallKey.UninstallString -replace '\"',''",
+      "  if (Test-Path $uninstallCmd) {",
+      "    Write-Host \"Uninstalling Mendix Studio Pro 9.24.22...\" -ForegroundColor Cyan",
+      "    Start-Process -Wait -FilePath $uninstallCmd -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'",
+      "  }",
+      "}"
+    ]
   },
   "checkver": {
     "url": "https://marketplace.mendix.com/link/studiopro/",
