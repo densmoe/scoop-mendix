@@ -1,16 +1,16 @@
 {
-  "version": "10.24.27",
+  "version": "10.24.28",
   "description": "Low-code application development platform",
   "homepage": "https://www.mendix.com/studio-pro/",
   "license": "Proprietary",
   "architecture": {
     "64bit": {
-      "url": "https://artifacts.rnd.mendix.com/modelers/Mendix-10.24.27.128337-User-x64-Setup.exe",
-      "hash": "1ba5ae7fa2a63d30de58b24d0898b9749bd523858dab7450ad63f99355138797"
+      "url": "https://artifacts.rnd.mendix.com/modelers/Mendix-10.24.28.129343-User-x64-Setup.exe",
+      "hash": "49da6bfdfa2c49faa471851c75f2301a0aa9f33d9d1b6cdb90ba97f50873db33"
     },
     "arm64": {
-      "url": "https://artifacts.rnd.mendix.com/modelers/Mendix-10.24.27.128337-User-arm64-Setup.exe",
-      "hash": "7b9d711b5fb078c75c3e73587264538e8c56550dd068f123bb351fe31f94227a"
+      "url": "https://artifacts.rnd.mendix.com/modelers/Mendix-10.24.28.129343-User-arm64-Setup.exe",
+      "hash": "8f8b9e96b88b7f29beee0f6ca7c152d0aadc45f0020682b249218af6d80f9fae"
     }
   },
   "pre_install": [
@@ -26,9 +26,9 @@
   ],
   "post_install": [
     "$installPath = \"$env:LOCALAPPDATA\\Programs\\Mendix\"",
-    "$versionDir = Get-ChildItem $installPath -ErrorAction SilentlyContinue | Where-Object { $_.Name -like '10.24.27*' } | Select-Object -First 1",
+    "$versionDir = Get-ChildItem $installPath -ErrorAction SilentlyContinue | Where-Object { $_.Name -like '10.24.28*' } | Select-Object -First 1",
     "if ($versionDir) {",
-    "  Write-Host \"Mendix Studio Pro 10.24.27 installed successfully\" -ForegroundColor Green",
+    "  Write-Host \"Mendix Studio Pro 10.24.28 installed successfully\" -ForegroundColor Green",
     "  Write-Host \"Location: $installPath\\$($versionDir.Name)\" -ForegroundColor Cyan",
     "  Write-Host \"Executable: $installPath\\$($versionDir.Name)\\modeler\\studiopro.exe\" -ForegroundColor Cyan",
     "} else {",
@@ -37,11 +37,11 @@
   ],
   "uninstaller": {
     "script": [
-      "$uninstallKey = Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like '*Mendix*10.24.27*' } | Select-Object -First 1",
+      "$uninstallKey = Get-ItemProperty 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like '*Mendix*10.24.28*' } | Select-Object -First 1",
       "if ($uninstallKey -and $uninstallKey.UninstallString) {",
       "  $uninstallCmd = $uninstallKey.UninstallString -replace '\"',''",
       "  if (Test-Path $uninstallCmd) {",
-      "    Write-Host \"Uninstalling Mendix Studio Pro 10.24.27...\" -ForegroundColor Cyan",
+      "    Write-Host \"Uninstalling Mendix Studio Pro 10.24.28...\" -ForegroundColor Cyan",
       "    Start-Process -Wait -FilePath $uninstallCmd -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'",
       "  }",
       "}"
